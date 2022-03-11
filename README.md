@@ -13,8 +13,9 @@ Store that somewhere safe. Together with the LUKS header things can be decrypted
 ## How to transform the key & split it into two pieces
 Using base64 makes it a lot easier to handle the file. Transfer the splitted key to the remote systems.
 
-`base64 /dev/shm/key /dev/shm/key_b64
-split -n 2 /dev/shm/key_b64 key_`
+`base64 /dev/shm/key /dev/shm/key_b64`
+
+`split -n 2 /dev/shm/key_b64 key_`
 
 ## How to set up a LUKS encrypted container
 There is only one key present in the LUKS container. And that one is not human readable.
@@ -37,16 +38,20 @@ Just for the sake of completeness. You should consider reading the LUKS manpage 
 
 ## How to create & enable a systemd service
 Works for most distributions.
+
 `cp mount-enc-fs.service /etc/systemd/system/`
+
 `systemctl daemon-reload`
+
 `systemctl enable mount-enc-fs.service`
 
 ## How to create & enable knockd
 Do at your own risk as this will overwrite an existing file. Remember to adjust /etc/default/knockd if needed.
+
 `cp knockd.conf /etc/`
 
 # Files
-knockd.conf|Knock daemon configuration file, usually to be placed under /etc/knockd.conf. Remember that this file is only an example and has to be customized for every node.
-mount_encrytped_filesystem.sh|Script to fetch all key parts and mount the encrypted filesystem. Header section has to be customized. This is where all the magic happens. Hsa to be placed under /root/ if you are using the vanilla service file (see below)
-mount-enc-fs.service|Systemd unit file, usually to be placed under /etc/systemd/system
-unmount_encrypted_filesystem.sh|Script to unmount the filesystem. Actually this is part of mount_encrypted_filesystem.sh and only there for convenience. Should be placed along mount_encrypted_filesystem.sh
+- `knockd.conf` Knock daemon configuration file, usually to be placed under /etc/knockd.conf. Remember that this file is only an example and has to be customized for every node.
+- `mount_encrytped_filesystem.sh` Script to fetch all key parts and mount the encrypted filesystem. Header section has to be customized. This is where all the magic happens. Hsa to be placed under /root/ if you are using the vanilla service file (see below)
+- `mount-enc-fs.service` Systemd unit file, usually to be placed under /etc/systemd/system
+- `unmount_encrypted_filesystem.sh` Script to unmount the filesystem. Actually this is part of mount_encrypted_filesystem.sh and only there for convenience. Should be placed along mount_encrypted_filesystem.sh
