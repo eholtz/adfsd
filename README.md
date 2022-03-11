@@ -7,25 +7,32 @@ This is a collection of scripts to automatically decrypt a file system when boot
 # Howtos
 ## How to generate a key for LUKS
 Store that somewhere safe. Together with the LUKS header things can be decrypted.
+
 `dd if=/dev/urandom of=/dev/shm/key bs=1M count=1`
 
 ## How to transform the key & split it into two pieces
 Using base64 makes it a lot easier to handle the file. Transfer the splitted key to the remote systems.
-`base64 /dev/shm/key /dev/shm/key_b64`
-`split -n 2 /dev/shm/key_b64 key_`
+
+`base64 /dev/shm/key /dev/shm/key_b64
+split -n 2 /dev/shm/key_b64 key_`
 
 ## How to set up a LUKS encrypted container
 There is only one key present in the LUKS container. And that one is not human readable.
+
 `cryptsetup luksFormat --key-file /dev/shm/key /dev/vdb`
+
 `cryptsetup luksOpen --key-file /dev/shm/key /dev/vdb lukscrypt`
+
 `mkfs.ext4 /dev/mapper/lukscrypt`
 
 ## How to backup a LUKS header
 Store that somewhere safe. Together with the key things can be decrypted.
+
 `cryptsetup luksHeaderBackup /dev/vdb --header-backup-file /dev/shm/headerbackup`
 
 ## How to restore a LUKS header
 Just for the sake of completeness. You should consider reading the LUKS manpage anyway.
+
 `cryptsetup luksHeaderRestore /dev/vdb --header-backup-file /dev/shm/headerbackup`
 
 ## How to create & enable a systemd service
