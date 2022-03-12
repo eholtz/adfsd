@@ -45,6 +45,21 @@ Works for most distributions.
 
 `systemctl enable mount-enc-fs.service`
 
+## How to open the firewall
+If you are running the knockd somewhere you usually have that one behing a firewall, so opening the ports is important. The port obviously depends on the destination.
+
+`firewall-cmd --permanent --zone=public --add-port=8001-8004/tcp`
+
+or
+
+`iptables -A INPUT -p tcp -m iprange --dst-range 8001-8004`
+
+## How to restrict scp copy
+To add a ssh connection with a pretty restricted key you can add the following to ~/.ssh/authorized_keys
+
+`command="if [[ \"$SSH_ORIGINAL_COMMAND\" =~ ^scp[[:space:]]-f[[:space:]]/some/absolute/path ]]; then $SSH_ORIGINAL_COMMAND ; else echo no access; fi",no-pty,no-port-forwarding,no-agent-forwarding,no-X11-forwarding ssh-ed25519 AAAA...`
+
+
 ## How to create & enable knockd
 Do at your own risk as this will overwrite an existing file. Remember to adjust /etc/default/knockd if needed.
 

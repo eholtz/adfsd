@@ -4,8 +4,9 @@
 # dns name or ip as the network should already be up. The 
 # sequence obviously has to be aligned with knockd.conf on the 
 # actual nodes.
-kcli="192.168.122.80 192.168.122.83"
-kseq="7001 7002 7003;8001 8002 8003"
+kcli="192.168.122.80 192.168.122.39"
+kseq="7001 7002 7003;22"
+kmet="knock;ssh"
 
 # just example values
 encrypted_device="/dev/vdb"
@@ -21,6 +22,12 @@ sleep_base=3
 # most people will presumably not change this. it should be
 # writeable though ...
 incoming_key_dir="/dev/shm/splittedkeys/"
+
+# if you are using ssh we need a private key to use and the
+# user name on the destination machine
+ssh_private_key="/root/.ssh/id_getkey.priv"
+ssh_remote_user="eh"
+
 
 ## it should not be necessary to change anything below this line
 ## do so at your own risk
@@ -51,14 +58,24 @@ function knock_and_get_key_loop() {
 		counter=$((counter + 1))
     # if the key is already there we skip
     [ -e $incoming_key_dir_sub/$counter ] && continue
-		knock_and_get_key $counter &
+		method=$(echo $kmet | cut -d ';' -f $counter)
+		[ "$method" == "knock" ] && knock_and_get_key $counter $client &
+		[ "$method" == "ssh" ] && get_key_via_ssh $counter $client &
 	done
+}
+
+# this function copys the key part via ssh from a remote system
+function get_key_via_ssh() {
+	keypart=$1
+	client=$2
+	timeout $((sleep_base * 2)) scp -i $ssh_private_key $ssh_remote_user@$client:/home/$ssh_remote_user/keypart $incoming_key_dir_sub/$keypart || rm $incoming_key_dir_sub/$keypart
 }
 
 # this function knocks to the nth system (given as first parameter
 # and grabs the key that will be sent over
 function knock_and_get_key() {
 	keypart=$1
+	client=$2
 	# get the knock sequence
 	sequence=$(echo $kseq | cut -d ';' -f $keypart)
 	# the last port of the sequence is important, as the transport port is
@@ -66,7 +83,7 @@ function knock_and_get_key() {
 	lastport=$(echo $sequence | sed "s/.*\ \([0-9]*$\)/\1/")
 	knock $client $sequence
 	sleep $sleep_base
-	timeout 10 netcat $client $((lastport + 1)) > $incoming_key_dir_sub/$keypart || rm $incoming_key_dir_sub/$keypart
+	timeout $((sleep_base * 2)) netcat $client $((lastport + 1)) > $incoming_key_dir_sub/$keypart || rm $incoming_key_dir_sub/$keypart
 }
 
 ## functions end
